@@ -4,7 +4,7 @@ A professional mobile forum application built with React Native and Expo, follow
 
 ## 🚀 Technology Stack
 
-- **Framework**: [Expo](https://expo.dev/) (SDK 54)
+- **Framework**: [Expo](https://expo.dev/) (SDK 52)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **State Management**: [Redux Toolkit](https://redux-toolkit.js.org/)
 - **Data Fetching**: [TanStack React Query](https://tanstack.com/query/latest)
