@@ -1,9 +1,15 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, createSlice } from '@reduxjs/toolkit';
 
-// Basic store setup. Features will add their reducers here.
+// Placeholder slice to satisfy Redux requirement of having at least one reducer
+const placeholderSlice = createSlice({
+  name: 'placeholder',
+  initialState: {},
+  reducers: {},
+});
+
 export const store = configureStore({
   reducer: {
-    // auth: authReducer,
+    placeholder: placeholderSlice.reducer,
   },
 });
 

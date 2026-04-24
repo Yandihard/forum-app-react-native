@@ -1,6 +1,7 @@
+import "./global.css";
 import React from 'react';
-import { Providers } from './src/app/Providers';
-import { AppNavigator } from './src/app/AppNavigator';
+import { Providers } from './src/main/Providers';
+import { AppNavigator } from './src/main/AppNavigator';
 import { StatusBar } from 'expo-status-bar';
 
 export default function App() {
