@@ -1,14 +1,26 @@
-import React from 'react';
-import {
-  View,
-  Text,
+import React, { useEffect } from 'react';
+import { 
+  View, 
+  Text, 
   FlatList,
-  Image,
+  RefreshControl,
+  StatusBar
 } from 'react-native';
+import AvatarImage from '../../../../core/components/AvatarImage';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInRight } from 'react-native-reanimated';
-import { Trophy, Medal, Crown } from 'lucide-react-native';
+import Animated, { 
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence
+} from 'react-native-reanimated';
+import { Trophy, Award, TrendingUp } from 'lucide-react-native';
 import { cssInterop } from 'nativewind';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../../../../core/store';
+import { fetchLeaderboardsThunk } from '../../../../core/store/slices/leaderboardSlice';
 
 cssInterop(LinearGradient, {
   className: {
@@ -16,111 +28,121 @@ cssInterop(LinearGradient, {
   },
 });
 
-const MOCK_LEADERS = [
-  { id: '1', name: 'Audrey', points: 2450, avatar: 'https://i.pravatar.cc/150?u=a', rank: 1 },
-  { id: '2', name: 'Zack S.', points: 2100, avatar: 'https://i.pravatar.cc/150?u=b', rank: 2 },
-  { id: '3', name: 'Luna Love', points: 1950, avatar: 'https://i.pravatar.cc/150?u=c', rank: 3 },
-  { id: '4', name: 'Mike Ross', points: 1800, avatar: 'https://i.pravatar.cc/150?u=d', rank: 4 },
-  { id: '5', name: 'Harvey Specter', points: 1750, avatar: 'https://i.pravatar.cc/150?u=e', rank: 5 },
-  { id: '6', name: 'Donna Paulsen', points: 1600, avatar: 'https://i.pravatar.cc/150?u=f', rank: 6 },
-  { id: '7', name: 'Louis Litt', points: 1400, avatar: 'https://i.pravatar.cc/150?u=g', rank: 7 },
-];
+const LeaderboardSkeleton = ({ isDarkMode }: { isDarkMode: boolean }) => {
+  const opacity = useSharedValue(0.3);
 
-const RankBadge = ({ rank }: { rank: number }) => {
-  if (rank === 1) return <Crown size={24} color="#fbbf24" fill="#fbbf24" />;
-  if (rank === 2) return <Medal size={24} color="#94a3b8" fill="#94a3b8" />;
-  if (rank === 3) return <Medal size={24} color="#b45309" fill="#b45309" />;
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.7, { duration: 800 }),
+        withTiming(0.3, { duration: 800 })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
   return (
-    <View className="w-8 h-8 rounded-full bg-slate-100 items-center justify-center">
-      <Text className="text-slate-500 font-bold">{rank}</Text>
+    <View className={`flex-row items-center p-4 rounded-3xl mb-3 border shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
+      <Animated.View style={animatedStyle} className={`w-8 h-8 rounded-full ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+      <Animated.View style={animatedStyle} className={`w-12 h-12 rounded-full ml-4 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+      <View className="ml-4 flex-1">
+        <Animated.View style={animatedStyle} className={`h-4 w-32 rounded-md ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
+      </View>
+      <Animated.View style={animatedStyle} className={`h-6 w-12 rounded-lg ${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'}`} />
     </View>
   );
 };
 
-const LeaderItem = ({ item, index }: { item: typeof MOCK_LEADERS[0], index: number }) => (
-  <Animated.View
-    entering={FadeInRight.delay(index * 100).duration(500)}
-    className="flex-row items-center bg-white mx-4 my-2 p-4 rounded-2xl shadow-sm border border-slate-100"
-  >
-    <View className="w-10 items-center">
-      <RankBadge rank={item.rank} />
-    </View>
-    
-    <Image 
-      source={{ uri: item.avatar }} 
-      className="w-12 h-12 rounded-full mx-3"
-    />
-    
-    <View className="flex-1">
-      <Text className="text-slate-900 font-bold text-base">{item.name}</Text>
-      <Text className="text-slate-500 text-xs">Community Champion</Text>
-    </View>
-
-    <View className="items-end">
-      <Text className="text-[#7E69FF] font-bold text-lg">{item.points.toLocaleString()}</Text>
-      <Text className="text-slate-400 text-[10px] uppercase font-bold">Points</Text>
-    </View>
-  </Animated.View>
-);
+const LeaderboardItem = ({ item, index, isDarkMode }: { item: any, index: number, isDarkMode: boolean }) => {
+  const isTopThree = index < 3;
+  
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(index * 100).duration(500).springify()}
+      className={`flex-row items-center p-4 rounded-3xl mb-3 border shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}
+    >
+      <View className={`w-8 h-8 rounded-full items-center justify-center ${isTopThree ? 'bg-amber-100' : (isDarkMode ? 'bg-slate-700' : 'bg-slate-100')}`}>
+        <Text className={`font-bold ${isTopThree ? 'text-amber-600' : (isDarkMode ? 'text-slate-400' : 'text-slate-500')}`}>{index + 1}</Text>
+      </View>
+      
+      <AvatarImage 
+        uri={item.user.avatar}
+        name={item.user.name}
+        size={48}
+        className="ml-4 border-2 border-slate-50"
+      />
+      
+      <View className="ml-4 flex-1">
+        <Text className={`font-bold text-base ${isDarkMode ? 'text-white' : 'text-slate-900'}`} numberOfLines={1}>{item.user.name}</Text>
+      </View>
+      
+      <View className={`px-4 py-2 rounded-2xl flex-row items-center ${isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-50'}`}>
+        <Award size={16} color="#7E69FF" />
+        <Text className="text-[#7E69FF] font-black ml-1.5">{item.score}</Text>
+      </View>
+    </Animated.View>
+  );
+};
 
 export default function LeaderboardScreen() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { leaderboards, status } = useSelector((state: RootState) => state.leaderboards);
+  const { isDarkMode } = useSelector((state: RootState) => state.theme);
+
+  useEffect(() => {
+    dispatch(fetchLeaderboardsThunk());
+  }, [dispatch]);
+
+  const onRefresh = () => {
+    dispatch(fetchLeaderboardsThunk());
+  };
+
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className={`flex-1 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+      
       <LinearGradient
-        colors={['#7E69FF', '#D66DFF']}
-        className="pt-14 pb-12 px-6 rounded-b-[50px]"
+        colors={['#FFD700', '#FFA500']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        className="pt-14 pb-8 px-6 rounded-b-[45px] shadow-2xl z-10"
       >
-        <View className="flex-row items-center justify-center mb-8">
-          <Trophy size={28} color="white" />
-          <Text className="text-white text-2xl font-black ml-3 tracking-wider">LEADERBOARD</Text>
+        <View className="flex-row justify-between items-center mb-6">
+          <View>
+            <Text className="text-white/80 font-medium text-sm">Global Rankings</Text>
+            <Text className="text-white text-2xl font-black tracking-tight">Leaderboard</Text>
+          </View>
+          <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center border border-white/30">
+            <Trophy size={24} color="white" />
+          </View>
         </View>
-
-        <View className="flex-row justify-around items-end mb-4">
-          {/* 2nd Place */}
-          <View className="items-center">
-            <View className="relative">
-              <Image source={{ uri: MOCK_LEADERS[1].avatar }} className="w-16 h-16 rounded-full border-4 border-slate-300" />
-              <View className="absolute -bottom-2 -right-2 bg-slate-300 w-7 h-7 rounded-full items-center justify-center">
-                <Text className="text-white font-bold text-xs">2</Text>
-              </View>
-            </View>
-            <Text className="text-white font-bold mt-3">{MOCK_LEADERS[1].name}</Text>
-            <Text className="text-white/80 text-xs">{MOCK_LEADERS[1].points} pts</Text>
-          </View>
-
-          {/* 1st Place */}
-          <View className="items-center -top-4">
-            <View className="relative">
-              <Crown size={32} color="#fbbf24" fill="#fbbf24" className="absolute -top-8 self-center" />
-              <Image source={{ uri: MOCK_LEADERS[0].avatar }} className="w-24 h-24 rounded-full border-4 border-yellow-400" />
-              <View className="absolute -bottom-2 -right-2 bg-yellow-400 w-8 h-8 rounded-full items-center justify-center">
-                <Text className="text-white font-bold text-sm">1</Text>
-              </View>
-            </View>
-            <Text className="text-white font-black mt-3 text-lg">{MOCK_LEADERS[0].name}</Text>
-            <Text className="text-white/90 text-sm font-bold">{MOCK_LEADERS[0].points} pts</Text>
-          </View>
-
-          {/* 3rd Place */}
-          <View className="items-center">
-            <View className="relative">
-              <Image source={{ uri: MOCK_LEADERS[2].avatar }} className="w-16 h-16 rounded-full border-4 border-amber-600" />
-              <View className="absolute -bottom-2 -right-2 bg-amber-600 w-7 h-7 rounded-full items-center justify-center">
-                <Text className="text-white font-bold text-xs">3</Text>
-              </View>
-            </View>
-            <Text className="text-white font-bold mt-3">{MOCK_LEADERS[2].name}</Text>
-            <Text className="text-white/80 text-xs">{MOCK_LEADERS[2].points} pts</Text>
-          </View>
+        
+        <View className="flex-row items-center bg-white/20 p-4 rounded-2xl">
+          <TrendingUp size={20} color="white" />
+          <Text className="text-white font-bold ml-3">Top contributors this week</Text>
         </View>
       </LinearGradient>
 
       <FlatList
-        data={MOCK_LEADERS.slice(3)}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => <LeaderItem item={item} index={index} />}
-        contentContainerStyle={{ paddingVertical: 20, paddingBottom: 100 }}
+        data={status === 'loading' ? [1, 2, 3, 4, 5, 6] : leaderboards}
+        keyExtractor={(item: any, index) => item.user?.id || index.toString()}
+        renderItem={({ item, index }) => 
+          status === 'loading' ? (
+            <LeaderboardSkeleton isDarkMode={isDarkMode} />
+          ) : (
+            <LeaderboardItem item={item} index={index} isDarkMode={isDarkMode} />
+          )
+        }
+        contentContainerStyle={{ padding: 20, paddingTop: 30, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={status === 'loading' && leaderboards.length > 0} onRefresh={onRefresh} tintColor="#FFA500" />
+        }
       />
     </View>
   );

@@ -10,35 +10,36 @@ import ThreadsScreen from '../features/forum/presentation/screens/ThreadsScreen'
 import LeaderboardScreen from '../features/forum/presentation/screens/LeaderboardScreen';
 import ProfileScreen from '../features/profile/presentation/screens/ProfileScreen';
 
+import { useSelector } from 'react-redux';
+import { RootState } from '../core/store';
+
 const Tab = createBottomTabNavigator();
 
 export const MainTabs = () => {
+  const { isDarkMode } = useSelector((state: RootState) => state.theme);
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          position: 'absolute',
-          bottom: 20,
-          left: 20,
-          right: 20,
-          elevation: 0,
-          backgroundColor: '#ffffff',
-          borderRadius: 25,
-          height: 70,
+          backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+          height: Platform.OS === 'ios' ? 88 : 70,
+          borderTopWidth: 1,
+          borderTopColor: isDarkMode ? '#334155' : '#f1f5f9',
+          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+          paddingTop: 12,
+          elevation: 8,
           shadowColor: '#000',
           shadowOffset: {
             width: 0,
-            height: 10,
+            height: -4,
           },
-          shadowOpacity: 0.1,
-          shadowRadius: 10,
-          borderTopWidth: 0,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 12,
-          paddingTop: 12,
+          shadowOpacity: isDarkMode ? 0.2 : 0.05,
+          shadowRadius: 4,
         },
         tabBarActiveTintColor: '#7E69FF',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarInactiveTintColor: isDarkMode ? '#64748b' : '#94a3b8',
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 12,

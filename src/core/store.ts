@@ -1,15 +1,17 @@
-import { configureStore, createSlice } from '@reduxjs/toolkit';
-
-// Placeholder slice to satisfy Redux requirement of having at least one reducer
-const placeholderSlice = createSlice({
-  name: 'placeholder',
-  initialState: {},
-  reducers: {},
-});
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from './store/slices/authSlice';
+import threadReducer from './store/slices/threadSlice';
+import userReducer from './store/slices/userSlice';
+import leaderboardReducer from './store/slices/leaderboardSlice';
+import themeReducer from './store/slices/themeSlice';
 
 export const store = configureStore({
   reducer: {
-    placeholder: placeholderSlice.reducer,
+    auth: authReducer,
+    threads: threadReducer,
+    users: userReducer,
+    leaderboards: leaderboardReducer,
+    theme: themeReducer,
   },
 });
 

@@ -26,6 +26,9 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { cssInterop } from 'nativewind';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginThunk, clearError } from '../../../../core/store/slices/authSlice';
+import { AppDispatch, RootState } from '../../../../core/store';
 
 // Register custom components for NativeWind
 cssInterop(LinearGradient, {
@@ -78,9 +81,11 @@ const ErrorModal = ({ visible, message, onClose }: { visible: boolean, message: 
 
 export default function LoginScreen() {
   const navigation = useNavigation<any>();
+  const dispatch = useDispatch<AppDispatch>();
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { status, error: reduxError } = useSelector((state: RootState) => state.auth);
+  const isLoading = status === 'loading';
+  const error = reduxError;
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -90,22 +95,18 @@ export default function LoginScreen() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLogin = () => {
-    setIsLoading(true);
-    
-    // Simulate API delay
-    setTimeout(() => {
-      if (formData.email === 'audrey@audrey.com' && formData.password === '123456') {
-        setIsLoading(false);
+  const handleLogin = async () => {
+    try {
+      const resultAction = await dispatch(loginThunk({ email: formData.email, password: formData.password }));
+      if (loginThunk.fulfilled.match(resultAction)) {
         navigation.reset({
           index: 0,
           routes: [{ name: 'MainTabs' }],
         });
-      } else {
-        setIsLoading(false);
-        setError('Email or password you entered is incorrect. Please check and try again.');
       }
-    }, 2000);
+    } catch (err) {
+      // Error handled by redux state
+    }
   };
 
   return (
@@ -234,7 +235,7 @@ export default function LoginScreen() {
       <ErrorModal 
         visible={!!error} 
         message={error || ''} 
-        onClose={() => setError(null)} 
+        onClose={() => dispatch(clearError())} 
       />
     </LinearGradient>
   );

@@ -5,8 +5,19 @@ import SignUpScreen from '../features/auth/presentation/screens/SignUpScreen';
 import LoginScreen from '../features/auth/presentation/screens/LoginScreen';
 import SplashScreen from '../features/auth/presentation/screens/SplashScreen';
 import { MainTabs } from './MainTabs';
+import AddThreadScreen from '../features/forum/presentation/screens/AddThreadScreen';
+import DetailThreadScreen from '../features/forum/presentation/screens/DetailThreadScreen';
 
-const Stack = createNativeStackNavigator();
+export type RootStackParamList = {
+  Splash: undefined;
+  Login: undefined;
+  SignUp: undefined;
+  MainTabs: undefined;
+  AddThread: undefined;
+  DetailThread: { threadId: string };
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const AppNavigator = () => {
   return (
@@ -29,11 +40,17 @@ export const AppNavigator = () => {
         />
         <Stack.Screen 
           name="MainTabs" 
-          component={MainTabs} 
+          component={MainTabs as any} 
+        />
+        <Stack.Screen 
+          name="AddThread" 
+          component={AddThreadScreen} 
+        />
+        <Stack.Screen 
+          name="DetailThread" 
+          component={DetailThreadScreen} 
         />
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
-
-

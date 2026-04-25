@@ -22,6 +22,9 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { cssInterop } from 'nativewind';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerThunk, clearError } from '../../../../core/store/slices/authSlice';
+import { AppDispatch, RootState } from '../../../../core/store';
 
 // Register custom components for NativeWind
 cssInterop(LinearGradient, {
@@ -65,7 +68,10 @@ const GoogleIcon = () => (
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
+  const dispatch = useDispatch<AppDispatch>();
   const [showPassword, setShowPassword] = useState(false);
+  const { status, error: reduxError } = useSelector((state: RootState) => state.auth);
+  const isLoading = status === 'loading';
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -74,6 +80,17 @@ export default function SignUpScreen() {
 
   const handleInputChange = (name: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRegister = async () => {
+    try {
+      const resultAction = await dispatch(registerThunk({ name: formData.fullName, email: formData.email, password: formData.password }));
+      if (registerThunk.fulfilled.match(resultAction)) {
+        navigation.navigate('Login');
+      }
+    } catch (err) {
+      // Handled by redux error state
+    }
   };
 
   return (
@@ -175,10 +192,12 @@ export default function SignUpScreen() {
               {/* Submit Button */}
               <TouchableOpacity
                 activeOpacity={0.8}
+                onPress={handleRegister}
+                disabled={isLoading}
                 className="w-full py-4 bg-[#007AFF] rounded-full shadow-lg mt-6"
               >
                 <Text className="text-white font-semibold text-center text-lg">
-                  Create Account
+                  {isLoading ? 'Processing...' : 'Create Account'}
                 </Text>
               </TouchableOpacity>
             </View>

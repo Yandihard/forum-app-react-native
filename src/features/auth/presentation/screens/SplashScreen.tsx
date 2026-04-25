@@ -14,6 +14,9 @@ import Animated, {
 import { MessageCircle } from 'lucide-react-native';
 import { cssInterop } from 'nativewind';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
+import { initAuthThunk } from '../../../../core/store/slices/authSlice';
+import { AppDispatch } from '../../../../core/store';
 
 cssInterop(LinearGradient, {
   className: {
@@ -29,6 +32,7 @@ cssInterop(Animated.View, {
 
 export default function SplashScreen() {
   const navigation = useNavigation<any>();
+  const dispatch = useDispatch<AppDispatch>();
   const scale = useSharedValue(0.3);
   const opacity = useSharedValue(0);
 
@@ -44,13 +48,27 @@ export default function SplashScreen() {
     opacity.value = withTiming(1, { duration: 1000 });
     scale.value = withSpring(1, { damping: 12 });
 
-    // Navigate to Login after 2.5 seconds
-    const timer = setTimeout(() => {
-      navigation.replace('Login');
-    }, 2500);
+    const initAuth = async () => {
+      try {
+        const resultAction = await dispatch(initAuthThunk());
+        if (initAuthThunk.fulfilled.match(resultAction) && resultAction.payload.token) {
+          setTimeout(() => {
+            navigation.replace('MainTabs');
+          }, 2500);
+        } else {
+          setTimeout(() => {
+            navigation.replace('Login');
+          }, 2500);
+        }
+      } catch (err) {
+        setTimeout(() => {
+          navigation.replace('Login');
+        }, 2500);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    initAuth();
+  }, [dispatch]);
 
   return (
     <LinearGradient
